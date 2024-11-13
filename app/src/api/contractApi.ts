@@ -12,7 +12,7 @@ export interface ProposalAction {
   params: {
     amount: number;
     receiver_id: string;
-  }
+  };
 }
 
 export interface ContractProposal {

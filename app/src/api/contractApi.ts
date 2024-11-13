@@ -16,7 +16,7 @@ export interface ProposalAction {
 }
 
 export interface ContractProposal {
-  id: number[];
+  id: string;
   author_id: string;
   actions: ProposalAction[];
 }

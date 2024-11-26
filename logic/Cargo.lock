@@ -52,7 +52,7 @@ checksum = "1fd0f2584146f6f2ef48085050886acf353beff7305ebd1ae69500e27c67f64b"
 [[package]]
 name = "calimero-sdk"
 version = "0.1.0"
-source = "git+https://github.com/calimero-network/core?branch=master#4cd7556d77fc8676764c3d27442e83a1b065912c"
+source = "git+https://github.com/calimero-network/core?branch=master#55c6121c755f3a12efc69c1ae0ceaf67af898f30"
 dependencies = [
  "borsh",
  "bs58",
@@ -65,7 +65,7 @@ dependencies = [
 [[package]]
 name = "calimero-sdk-macros"
 version = "0.1.0"
-source = "git+https://github.com/calimero-network/core?branch=master#4cd7556d77fc8676764c3d27442e83a1b065912c"
+source = "git+https://github.com/calimero-network/core?branch=master#55c6121c755f3a12efc69c1ae0ceaf67af898f30"
 dependencies = [
  "prettyplease",
  "proc-macro2",
@@ -77,7 +77,7 @@ dependencies = [
 [[package]]
 name = "calimero-storage"
 version = "0.1.0"
-source = "git+https://github.com/calimero-network/core?branch=master#4cd7556d77fc8676764c3d27442e83a1b065912c"
+source = "git+https://github.com/calimero-network/core?branch=master#55c6121c755f3a12efc69c1ae0ceaf67af898f30"
 dependencies = [
  "borsh",
  "calimero-sdk",
@@ -95,7 +95,7 @@ dependencies = [
 [[package]]
 name = "calimero-storage-macros"
 version = "0.1.0"
-source = "git+https://github.com/calimero-network/core?branch=master#4cd7556d77fc8676764c3d27442e83a1b065912c"
+source = "git+https://github.com/calimero-network/core?branch=master#55c6121c755f3a12efc69c1ae0ceaf67af898f30"
 dependencies = [
  "borsh",
  "quote",

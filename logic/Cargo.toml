@@ -11,10 +11,6 @@ crate-type = ["cdylib"]
 calimero-sdk = { git = "https://github.com/calimero-network/core", branch = "master" }
 calimero-storage = { git = "https://github.com/calimero-network/core", branch = "master" }
 
-#calimero-sdk = { path = "../../core/crates/sdk" }
-#calimero-storage = { path = "../../core/crates/storage" }
-
-
 [profile.app-release]
 inherits = "release"
 codegen-units = 1

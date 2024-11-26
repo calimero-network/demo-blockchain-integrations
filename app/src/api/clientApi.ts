@@ -23,9 +23,7 @@ export interface SendProposalMessageRequest {
   message: Message;
 }
 
-export interface SendProposalMessageResponse {
-  result: boolean;
-}
+export interface SendProposalMessageResponse {}
 
 export interface CreateProposalRequest {
   receiver: String;
@@ -39,9 +37,7 @@ export interface ApproveProposalRequest {
   proposal_id: string;
 }
 
-export interface ApproveProposalResponse {
-  success: boolean;
-}
+export interface ApproveProposalResponse {}
 
 export enum ClientMethod {
   GET_PROPOSAL_MESSAGES = 'get_proposal_messages',

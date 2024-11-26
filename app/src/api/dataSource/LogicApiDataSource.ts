@@ -122,12 +122,8 @@ export class LogicApiDataSource implements ClientApi {
       return await this.handleError(response.error, {}, this.approveProposal);
     }
 
-    let result: ApproveProposalResponse = {
-      success: response?.result?.output?.success ?? false,
-    };
-
     return {
-      data: result,
+      data: {},
       error: null,
     };
   }
@@ -201,12 +197,8 @@ export class LogicApiDataSource implements ClientApi {
       );
     }
 
-    let sendMessageResponse: SendProposalMessageResponse = {
-      result: response?.result?.output?.result,
-    } as SendProposalMessageResponse;
-
     return {
-      data: sendMessageResponse,
+      data: {},
       error: null,
     };
   }

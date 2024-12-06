@@ -25,8 +25,49 @@ export interface SendProposalMessageRequest {
 
 export interface SendProposalMessageResponse {}
 
+export enum ProposalActionType {
+  ExternalFunctionCall = 'ExternalFunctionCall',
+  Transfer = 'Transfer',
+  SetNumApprovals = 'SetNumApprovals',
+  SetActiveProposalsLimit = 'SetActiveProposalsLimit',
+  SetContextValue = 'SetContextValue',
+}
+
+export type FormActionType =
+  | 'Cross contract call'
+  | 'Transfer'
+  | 'Set context variable'
+  | 'Change number of approvals needed'
+  | 'Change number of maximum active proposals';
+
+export interface ExternalFunctionCallAction {
+  type: ProposalActionType.ExternalFunctionCall;
+  receiver_id: string;
+  method_name: string;
+  args: Record<string, any>;
+  deposit: string;
+  gas?: string;
+}
+
+export interface TransferAction {
+  type: ProposalActionType.Transfer;
+  amount: string;
+}
+
 export interface CreateProposalRequest {
-  receiver: String;
+  action_type: string;
+  params: {
+    receiver_id?: string;
+    method_name?: string;
+    args?: string;
+    deposit?: string;
+    gas?: string;
+    amount?: string;
+    num_approvals?: number;
+    active_proposals_limit?: number;
+    key?: string;
+    value?: string;
+  };
 }
 
 export interface CreateProposalResponse {
@@ -42,8 +83,8 @@ export interface ApproveProposalResponse {}
 export enum ClientMethod {
   GET_PROPOSAL_MESSAGES = 'get_proposal_messages',
   SEND_PROPOSAL_MESSAGE = 'send_proposal_messages',
-  CREATE_PROPOSAL_MESSAGES = 'create_new_proposal',
-  APPROVE_PROPOSAL_MESSAGE = 'approve_proposal',
+  CREATE_PROPOSAL = 'create_new_proposal',
+  APPROVE_PROPOSAL = 'approve_proposal',
 }
 
 export interface ClientApi {

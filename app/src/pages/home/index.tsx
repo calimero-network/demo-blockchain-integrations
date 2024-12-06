@@ -23,6 +23,9 @@ import {
   GetProposalMessagesResponse,
   SendProposalMessageRequest,
   SendProposalMessageResponse,
+  ProposalActionType,
+  ExternalFunctionCallAction,
+  TransferAction,
 } from '../../api/clientApi';
 import { getContextId, getStorageApplicationId } from '../../utils/node';
 import {
@@ -156,6 +159,54 @@ const ProposalsWrapper = styled.div`
   }
 `;
 
+const ModalOverlay = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+`;
+
+const ModalContent = styled.div`
+  background-color: #1e1e1e;
+  padding: 2rem;
+  border-radius: 8px;
+  width: 90%;
+  max-width: 500px;
+  color: white;
+`;
+
+const FormGroup = styled.div`
+  margin-bottom: 1rem;
+
+  label {
+    display: block;
+    margin-bottom: 0.5rem;
+  }
+
+  input,
+  textarea {
+    width: 100%;
+    padding: 0.5rem;
+    border-radius: 4px;
+    border: 1px solid #444;
+    background-color: #333;
+    color: white;
+  }
+`;
+
+const ButtonGroup = styled.div`
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  margin-top: 1rem;
+`;
+
 export default function HomePage() {
   const navigate = useNavigate();
   const url = getAppEndpointKey();
@@ -172,6 +223,21 @@ export default function HomePage() {
   const [approveProposalLoading, setApproveProposalLoading] = useState(false);
   const [hasAlerted, setHasAlerted] = useState<boolean>(false);
   const lastExecutedProposalRef = useRef<string | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [proposalForm, setProposalForm] = useState({
+    actionType: 'Cross contract call',
+    protocol: 'NEAR',
+    contractId: '',
+    methodName: '',
+    arguments: [{ key: '', value: '' }],
+    deposit: '',
+    gas: '',
+    receiverId: '',
+    amount: '',
+    contextVariables: [{ key: '', value: '' }],
+    minApprovals: '',
+    maxActiveProposals: '',
+  });
 
   useEffect(() => {
     if (!url || !applicationId || !accessToken || !refreshToken) {
@@ -212,22 +278,119 @@ export default function HomePage() {
     }
   }
 
-  async function createProposal() {
+  async function createProposal(formData: typeof proposalForm) {
     setCreateProposalLoading(true);
-    let request: CreateProposalRequest = {
-      receiver: 'vuki.testnet',
-    };
+    let request: CreateProposalRequest;
 
-    const result: ResponseData<CreateProposalResponse> =
-      await new LogicApiDataSource().createProposal(request);
-    if (result?.error) {
-      console.error('Error:', result.error);
-      window.alert(`${result.error.message}`);
+    try {
+      console.log('Action type:', formData.actionType);
+
+      switch (formData.actionType) {
+        case 'Cross contract call': {
+          const argsObject = formData.arguments.reduce(
+            (acc, curr) => {
+              if (curr.key && curr.value) {
+                acc[curr.key] = curr.value;
+              }
+              return acc;
+            },
+            {} as Record<string, any>,
+          );
+
+          console.log(
+            'Creating ExternalFunctionCall proposal with args:',
+            argsObject,
+          );
+
+          request = {
+            action_type: 'ExternalFunctionCall',
+            params: {
+              receiver_id: formData.contractId,
+              method_name: formData.methodName,
+              args: JSON.stringify(argsObject),
+              deposit: formData.deposit || '0',
+              gas:
+                formData.protocol === 'NEAR'
+                  ? formData.gas || '30000000000000'
+                  : '0',
+            },
+          };
+
+          console.log(
+            'Final request structure:',
+            JSON.stringify(request, null, 2),
+          );
+          break;
+        }
+
+        case 'Transfer': {
+          request = {
+            action_type: ProposalActionType.Transfer,
+            params: {
+              receiver_id: formData.receiverId,
+              amount: formData.amount,
+            },
+          };
+          break;
+        }
+
+        case 'Set context variable': {
+          request = {
+            action_type: ProposalActionType.SetContextValue,
+            params: {
+              key: formData.contextVariables[0].key,
+              value: formData.contextVariables[0].value,
+            },
+          };
+          break;
+        }
+
+        case 'Change number of approvals needed': {
+          request = {
+            action_type: ProposalActionType.SetNumApprovals,
+            params: {
+              num_approvals: Number(formData.minApprovals),
+            },
+          };
+          break;
+        }
+
+        case 'Change number of maximum active proposals': {
+          request = {
+            action_type: ProposalActionType.SetActiveProposalsLimit,
+            params: {
+              active_proposals_limit: Number(formData.maxActiveProposals),
+            },
+          };
+          break;
+        }
+
+        default:
+          throw new Error('Invalid action type');
+      }
+
+      console.log('Request:', request);
+
+      const result: ResponseData<CreateProposalResponse> =
+        await new LogicApiDataSource().createProposal(request);
+
+      if (result?.error) {
+        console.error('Error:', result.error);
+        window.alert(`${result.error.message}`);
+        return;
+      }
+
+      if (result?.data) {
+        window.alert(`Proposal created successfully`);
+      } else {
+        throw new Error('Invalid response from server');
+      }
+    } catch (error) {
+      console.error('Error creating proposal:', error);
+      window.alert(`Error creating proposal: ${error.message}`);
+    } finally {
       setCreateProposalLoading(false);
-      return;
     }
-    window.alert(`Proposal with id: ${result.data} created successfully`);
-    setCreateProposalLoading(false);
   }
 
   const getProposals = async () => {
@@ -375,6 +538,104 @@ export default function HomePage() {
     navigate('/auth');
   };
 
+  const handleInputChange = (
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >,
+  ) => {
+    const { name, value } = e.target;
+    setProposalForm((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  const handleContextVariableChange = (
+    index: number,
+    field: 'key' | 'value',
+    value: string,
+  ) => {
+    setProposalForm((prev) => {
+      const newVariables = [...prev.contextVariables];
+      newVariables[index] = {
+        ...newVariables[index],
+        [field]: value,
+      };
+      return {
+        ...prev,
+        contextVariables: newVariables,
+      };
+    });
+  };
+
+  const addContextVariable = () => {
+    setProposalForm((prev) => ({
+      ...prev,
+      contextVariables: [...prev.contextVariables, { key: '', value: '' }],
+    }));
+  };
+
+  const removeContextVariable = (index: number) => {
+    setProposalForm((prev) => ({
+      ...prev,
+      contextVariables: prev.contextVariables.filter((_, i) => i !== index),
+    }));
+  };
+
+  const handleArgumentChange = (
+    index: number,
+    field: 'key' | 'value',
+    value: string,
+  ) => {
+    setProposalForm((prev) => {
+      const newArgs = [...prev.arguments];
+      newArgs[index] = {
+        ...newArgs[index],
+        [field]: value,
+      };
+      return {
+        ...prev,
+        arguments: newArgs,
+      };
+    });
+  };
+
+  const addArgument = () => {
+    setProposalForm((prev) => ({
+      ...prev,
+      arguments: [...prev.arguments, { key: '', value: '' }],
+    }));
+  };
+
+  const removeArgument = (index: number) => {
+    setProposalForm((prev) => ({
+      ...prev,
+      arguments: prev.arguments.filter((_, i) => i !== index),
+    }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsModalOpen(false);
+    await createProposal(proposalForm);
+
+    // Reset form after successful submission
+    setProposalForm({
+      actionType: 'Cross contract call',
+      protocol: 'NEAR',
+      contractId: '',
+      methodName: '',
+      arguments: [{ key: '', value: '' }],
+      deposit: '',
+      gas: '',
+      receiverId: '',
+      amount: '',
+      contextVariables: [{ key: '', value: '' }],
+      minApprovals: '',
+      maxActiveProposals: '',
+    });
+  };
+
   return (
     <FullPageCenter>
       <TextStyle>
@@ -383,9 +644,297 @@ export default function HomePage() {
 
       <div> Proposals </div>
 
-      <Button onClick={createProposal} disabled={createProposalLoading}>
+      <Button
+        onClick={() => setIsModalOpen(true)}
+        disabled={createProposalLoading}
+      >
         {createProposalLoading ? 'Loading...' : 'Create new proposal'}
       </Button>
+
+      {isModalOpen && (
+        <ModalOverlay onClick={() => setIsModalOpen(false)}>
+          <ModalContent onClick={(e) => e.stopPropagation()}>
+            <h2>Create New Proposal</h2>
+            <form onSubmit={handleSubmit}>
+              <FormGroup>
+                <label htmlFor="actionType">Action Type</label>
+                <select
+                  id="actionType"
+                  name="actionType"
+                  value={proposalForm.actionType}
+                  onChange={handleInputChange}
+                  required
+                >
+                  <option value="Cross contract call">
+                    Cross contract call
+                  </option>
+                  <option value="Transfer">Transfer</option>
+                  <option value="Set context variable">
+                    Set context variable
+                  </option>
+                  <option value="Change number of approvals needed">
+                    Change number of approvals needed
+                  </option>
+                  <option value="Change number of maximum active proposals">
+                    Change number of maximum active proposals
+                  </option>
+                </select>
+              </FormGroup>
+
+              {proposalForm.actionType === 'Cross contract call' && (
+                <>
+                  <FormGroup>
+                    <label htmlFor="protocol">Protocol</label>
+                    <select
+                      id="protocol"
+                      name="protocol"
+                      value={proposalForm.protocol}
+                      onChange={handleInputChange}
+                      required
+                    >
+                      <option value="NEAR">NEAR</option>
+                      <option value="Starknet">Starknet</option>
+                    </select>
+                  </FormGroup>
+                  <FormGroup>
+                    <label htmlFor="contractId">Contract ID</label>
+                    <input
+                      type="text"
+                      id="contractId"
+                      name="contractId"
+                      value={proposalForm.contractId}
+                      onChange={handleInputChange}
+                      required
+                    />
+                  </FormGroup>
+                  <FormGroup>
+                    <label htmlFor="methodName">Method Name</label>
+                    <input
+                      type="text"
+                      id="methodName"
+                      name="methodName"
+                      value={proposalForm.methodName}
+                      onChange={handleInputChange}
+                      required
+                    />
+                  </FormGroup>
+                  <FormGroup>
+                    <label htmlFor="deposit">
+                      Deposit{' '}
+                      {proposalForm.protocol === 'NEAR'
+                        ? '(in octoNEAR)'
+                        : '(in STRK)'}
+                    </label>
+                    <input
+                      type="text"
+                      id="deposit"
+                      name="deposit"
+                      value={proposalForm.deposit}
+                      onChange={handleInputChange}
+                      placeholder="0"
+                      required
+                    />
+                  </FormGroup>
+                  {proposalForm.protocol === 'NEAR' && (
+                    <FormGroup>
+                      <label htmlFor="gas">Gas</label>
+                      <input
+                        type="text"
+                        id="gas"
+                        name="gas"
+                        value={proposalForm.gas}
+                        onChange={handleInputChange}
+                        placeholder="30000000000000"
+                        required
+                      />
+                    </FormGroup>
+                  )}
+                  <FormGroup>
+                    <label>Arguments</label>
+                    {proposalForm.arguments.map((arg, index) => (
+                      <div
+                        key={index}
+                        style={{
+                          display: 'flex',
+                          gap: '1rem',
+                          alignItems: 'flex-end',
+                        }}
+                      >
+                        <FormGroup>
+                          <label>Key</label>
+                          <input
+                            type="text"
+                            value={arg.key}
+                            onChange={(e) =>
+                              handleArgumentChange(index, 'key', e.target.value)
+                            }
+                            required
+                          />
+                        </FormGroup>
+                        <FormGroup>
+                          <label>Value</label>
+                          <input
+                            type="text"
+                            value={arg.value}
+                            onChange={(e) =>
+                              handleArgumentChange(
+                                index,
+                                'value',
+                                e.target.value,
+                              )
+                            }
+                            required
+                          />
+                        </FormGroup>
+                        <ButtonSm
+                          type="button"
+                          onClick={() => removeArgument(index)}
+                          style={{ background: '#666', marginBottom: '1rem' }}
+                        >
+                          Remove
+                        </ButtonSm>
+                      </div>
+                    ))}
+                    <ButtonSm type="button" onClick={addArgument}>
+                      Add Argument
+                    </ButtonSm>
+                  </FormGroup>
+                </>
+              )}
+
+              {proposalForm.actionType === 'Transfer' && (
+                <>
+                  <FormGroup>
+                    <label htmlFor="receiverId">Receiver ID</label>
+                    <input
+                      type="text"
+                      id="receiverId"
+                      name="receiverId"
+                      value={proposalForm.receiverId}
+                      onChange={handleInputChange}
+                      required
+                    />
+                  </FormGroup>
+                  <FormGroup>
+                    <label htmlFor="amount">Amount</label>
+                    <input
+                      type="text"
+                      id="amount"
+                      name="amount"
+                      value={proposalForm.amount}
+                      onChange={handleInputChange}
+                      required
+                    />
+                  </FormGroup>
+                </>
+              )}
+
+              {proposalForm.actionType === 'Set context variable' && (
+                <>
+                  {proposalForm.contextVariables.map((variable, index) => (
+                    <div
+                      key={index}
+                      style={{
+                        display: 'flex',
+                        gap: '1rem',
+                        alignItems: 'flex-end',
+                      }}
+                    >
+                      <FormGroup>
+                        <label>Key</label>
+                        <input
+                          type="text"
+                          value={variable.key}
+                          onChange={(e) =>
+                            handleContextVariableChange(
+                              index,
+                              'key',
+                              e.target.value,
+                            )
+                          }
+                          required
+                        />
+                      </FormGroup>
+                      <FormGroup>
+                        <label>Value</label>
+                        <input
+                          type="text"
+                          value={variable.value}
+                          onChange={(e) =>
+                            handleContextVariableChange(
+                              index,
+                              'value',
+                              e.target.value,
+                            )
+                          }
+                          required
+                        />
+                      </FormGroup>
+                      <ButtonSm
+                        type="button"
+                        onClick={() => removeContextVariable(index)}
+                        style={{ background: '#666', marginBottom: '1rem' }}
+                      >
+                        Remove
+                      </ButtonSm>
+                    </div>
+                  ))}
+                  <ButtonSm type="button" onClick={addContextVariable}>
+                    Add Variable
+                  </ButtonSm>
+                </>
+              )}
+
+              {proposalForm.actionType ===
+                'Change number of approvals needed' && (
+                <FormGroup>
+                  <label htmlFor="minApprovals">
+                    Minimum Approvals Required
+                  </label>
+                  <input
+                    type="number"
+                    id="minApprovals"
+                    name="minApprovals"
+                    value={proposalForm.minApprovals}
+                    onChange={handleInputChange}
+                    min="1"
+                    required
+                  />
+                </FormGroup>
+              )}
+
+              {proposalForm.actionType ===
+                'Change number of maximum active proposals' && (
+                <FormGroup>
+                  <label htmlFor="maxActiveProposals">
+                    Maximum Active Proposals
+                  </label>
+                  <input
+                    type="number"
+                    id="maxActiveProposals"
+                    name="maxActiveProposals"
+                    value={proposalForm.maxActiveProposals}
+                    onChange={handleInputChange}
+                    min="1"
+                    required
+                  />
+                </FormGroup>
+              )}
+
+              <ButtonGroup>
+                <ButtonSm
+                  type="button"
+                  onClick={() => setIsModalOpen(false)}
+                  style={{ background: '#666' }}
+                >
+                  Cancel
+                </ButtonSm>
+                <ButtonSm type="submit">Create Proposal</ButtonSm>
+              </ButtonGroup>
+            </form>
+          </ModalContent>
+        </ModalOverlay>
+      )}
 
       <ProposalsWrapper>
         <div className="flex-container proposal-data">

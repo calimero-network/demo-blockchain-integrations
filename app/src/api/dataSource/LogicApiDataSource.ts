@@ -72,26 +72,51 @@ export class LogicApiDataSource implements ClientApi {
       return { error };
     }
 
-    const params: RpcQueryParams<CreateProposalRequest> = {
+    console.log('Creating proposal with request:', request);
+
+    const params: RpcQueryParams<typeof request> = {
       contextId: jwtObject?.context_id ?? getContextId(),
-      method: ClientMethod.CREATE_PROPOSAL_MESSAGES,
-      argsJson: request,
+      method: ClientMethod.CREATE_PROPOSAL,
+      argsJson: {
+        request: request,
+      },
       executorPublicKey: jwtObject.executor_public_key,
     };
 
-    const response = await getJsonRpcClient().execute<
-      CreateProposalRequest,
-      CreateProposalResponse
-    >(params, config);
+    console.log('RPC params:', params);
 
-    if (response?.error) {
-      return await this.handleError(response.error, {}, this.createProposal);
+    try {
+      const response = await getJsonRpcClient().execute<
+        typeof request,
+        CreateProposalResponse
+      >(params, config);
+
+      console.log('Raw response:', response);
+
+      if (response?.error) {
+        console.error('RPC error:', response.error);
+        return await this.handleError(response.error, {}, this.createProposal);
+      }
+
+      if (!response?.result?.output) {
+        console.error('Invalid response format:', response);
+        return {
+          error: { message: 'Invalid response format', code: 500 },
+          data: null,
+        };
+      }
+
+      return {
+        data: response.result.output as CreateProposalResponse,
+        error: null,
+      };
+    } catch (err) {
+      console.error('Unexpected error:', err);
+      return {
+        error: { message: err.message || 'Unexpected error', code: 500 },
+        data: null,
+      };
     }
-
-    return {
-      data: response.result.output as CreateProposalResponse,
-      error: null,
-    };
   }
 
   async approveProposal(
@@ -106,7 +131,7 @@ export class LogicApiDataSource implements ClientApi {
 
     const params: RpcQueryParams<ApproveProposalRequest> = {
       contextId: jwtObject?.context_id ?? getContextId(),
-      method: ClientMethod.APPROVE_PROPOSAL_MESSAGE,
+      method: ClientMethod.APPROVE_PROPOSAL,
       argsJson: request,
       executorPublicKey: jwtObject.executor_public_key,
     };

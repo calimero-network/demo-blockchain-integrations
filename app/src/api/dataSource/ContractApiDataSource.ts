@@ -3,6 +3,7 @@ import { ApiResponse } from '@calimero-is-near/calimero-p2p-sdk';
 import {
   ApprovalsCount,
   ContextDetails,
+  ContextVariables,
   ContractApi,
   ContractProposal,
   Members,
@@ -103,23 +104,50 @@ export class ContextApiDataSource implements ContractApi {
     }
   }
 
-  getContextDetails(): ApiResponse<ContextDetails> {
-    // try {
-    //   const headers: Header | null = await createAuthHeader(
-    //     contextId,
-    //     getNearEnvironment(),
-    //   );
-    //   const response = await this.client.get<ApiContext>(
-    //     `${getAppEndpointKey()}/admin-api/contexts/${contextId}`,
-    //     headers ?? {},
-    //   );
-    //   return response;
-    // } catch (error) {
-    //   console.error('Error fetching context:', error);
-    //   return { error: { code: 500, message: 'Failed to fetch context data.' } };
-    // }
-    throw new Error('Method not implemented.');
+  async getContextVariables(): ApiResponse<ContextVariables[]> {
+    try {
+      const { jwtObject, error } = getConfigAndJwt();
+      if (error) {
+        return { error };
+      }
+
+      const apiEndpoint = `${getStorageAppEndpointKey()}/admin-api/contexts/${jwtObject.context_id}/proposals/context-storage-entries`;
+      const body = {
+        offset: 0,
+        limit: 10,
+      };
+
+      const response = await axios.post(apiEndpoint, body, {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.data.data) {
+        return {
+          data: [],
+          error: null,
+        };
+      }
+
+      // Convert both key and value from Vec<u8> to string
+      const parsedData = response.data.data.map((item: any) => ({
+        key: new TextDecoder().decode(new Uint8Array(item.key)),
+        value: new TextDecoder().decode(new Uint8Array(item.value)),
+      }));
+
+      return {
+        data: parsedData ?? [],
+        error: null,
+      };
+    } catch (error) {
+      return {
+        data: null,
+        error: error as Error,
+      };
+    }
   }
+
   getContextMembers(): ApiResponse<Members[]> {
     throw new Error('Method not implemented.');
   }

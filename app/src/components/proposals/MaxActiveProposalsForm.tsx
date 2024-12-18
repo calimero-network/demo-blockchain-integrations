@@ -19,7 +19,7 @@ export default function MaxActiveProposalsForm({
         type="number"
         id="maxActiveProposals"
         name="maxActiveProposals"
-        placeholder='10'
+        placeholder="10"
         value={proposalForm.maxActiveProposals}
         onChange={handleInputChange}
         min="1"

@@ -39,6 +39,11 @@ export interface ApprovalsCount {
   num_approvals: number;
 }
 
+export interface ContextVariables {
+  key: string;
+  value: string;
+}
+
 export interface ContractApi {
   //Contract
   getContractProposals(

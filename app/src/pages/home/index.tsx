@@ -35,12 +35,17 @@ import {
 } from '../../utils/storage';
 import { useNavigate } from 'react-router-dom';
 import { ContextApiDataSource } from '../../api/dataSource/ContractApiDataSource';
-import { ApprovalsCount, ContractProposal } from '../../api/contractApi';
+import {
+  ApprovalsCount,
+  ContextVariables,
+  ContractProposal,
+} from '../../api/contractApi';
 import { Buffer } from 'buffer';
 import bs58 from 'bs58';
 import CreateProposalPopup, {
   ProposalData,
 } from '../../components/proposals/CreateProposalPopup';
+import Actions from '../../components/proposal/Actions';
 
 const FullPageCenter = styled.div`
   display: flex;
@@ -152,6 +157,26 @@ const ProposalsWrapper = styled.div`
   }
 `;
 
+const StyledTable = styled.table`
+  th,
+  td {
+    text-align: center;
+    padding: 8px;
+  }
+`;
+
+const ContextVariablesContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
+  .context-variables {
+    padding-left: 1rem;
+    padding-right: 1rem;
+    text-align: center;
+  }
+`;
+
 export default function HomePage() {
   const navigate = useNavigate();
   const url = getAppEndpointKey();
@@ -169,7 +194,9 @@ export default function HomePage() {
   const [hasAlerted, setHasAlerted] = useState<boolean>(false);
   const lastExecutedProposalRef = useRef<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-
+  const [contextVariables, setContextVariables] = useState<ContextVariables[]>(
+    [],
+  );
   useEffect(() => {
     if (!url || !applicationId || !accessToken || !refreshToken) {
       navigate('/auth');
@@ -240,10 +267,7 @@ export default function HomePage() {
               method_name: formData.methodName,
               args: JSON.stringify(argsObject),
               deposit: formData.deposit || '0',
-              gas:
-                formData.protocol === 'NEAR'
-                  ? '30000000000000'
-                  : '0',
+              gas: formData.protocol === 'NEAR' ? '30000000000000' : '0',
             },
           };
 
@@ -400,6 +424,17 @@ export default function HomePage() {
     }
   }
 
+  async function getContextVariables() {
+    const result: ResponseData<ContextVariables[]> =
+      await new ContextApiDataSource().getContextVariables();
+    if (result?.error) {
+      console.error('Error:', result.error);
+    } else {
+      // @ts-ignore
+      setContextVariables(result.data);
+    }
+  }
+
   useEffect(() => {
     const setProposalData = async () => {
       await getProposalApprovals();
@@ -513,7 +548,38 @@ export default function HomePage() {
       <TextStyle>
         <span>Blockchain proposals demo application</span>
       </TextStyle>
-
+      <ContextVariablesContainer>
+        <div className="flex-container">
+          <ButtonSm onClick={() => getContextVariables()}>
+            Get Context Variables
+          </ButtonSm>
+        </div>
+        <div className="flex-container context-variables">
+          <h3 className="title">Context variables:</h3>
+          {contextVariables.length > 0 ? (
+            <div>
+              <StyledTable>
+                <thead>
+                  <tr>
+                    <th>Key</th>
+                    <th>Value</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {contextVariables.map((variable) => (
+                    <tr key={variable.key}>
+                      <td>{variable.key}</td>
+                      <td>{variable.value}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </StyledTable>
+            </div>
+          ) : (
+            <div>No context variables</div>
+          )}
+        </div>
+      </ContextVariablesContainer>
       <div> Proposals </div>
 
       <Button
@@ -579,20 +645,7 @@ export default function HomePage() {
               )}
             </div>
             <h3 className="title actions-title">Actions</h3>
-            <div className="actions-headers highlight">
-              <div>Scope</div>
-              <div>Amount</div>
-              <div>Receiver ID</div>
-            </div>
-            <div>
-              {selectedProposal.actions.map((action, index) => (
-                <div key={index} className="actions-headers">
-                  <div>{action.scope}</div>
-                  <div>{action.params.amount}</div>
-                  <div>{action.params.receiver_id}</div>
-                </div>
-              ))}
-            </div>
+            <Actions actions={selectedProposal.actions} />
             <div className="flex-container center">
               <ButtonSm onClick={() => approveProposal(selectedProposal.id)}>
                 {approveProposalLoading ? 'Loading...' : 'Approve proposal'}

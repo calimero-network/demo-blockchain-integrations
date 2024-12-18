@@ -31,19 +31,6 @@ export default function CrossContractCallForm({
   return (
     <>
       <FormGroup>
-        <label htmlFor="protocol">Protocol</label>
-        <select
-          id="protocol"
-          name="protocol"
-          value={proposalForm.protocol}
-          onChange={handleInputChange}
-          required
-        >
-          <option value="NEAR">NEAR</option>
-          <option value="Starknet">Starknet</option>
-        </select>
-      </FormGroup>
-      <FormGroup>
         <label htmlFor="contractId">Contract ID</label>
         <input
           type="text"
@@ -68,10 +55,7 @@ export default function CrossContractCallForm({
         />
       </FormGroup>
       <FormGroup>
-        <label htmlFor="deposit">
-          Deposit{' '}
-          {proposalForm.protocol === 'NEAR' ? '(in octoNEAR)' : '(in STRK)'}
-        </label>
+        <label htmlFor="deposit">Deposit</label>
         <input
           type="text"
           id="deposit"

@@ -5,7 +5,7 @@ set -e
 
 # Simple protocol definition
 PROTOCOL="icp"
-OUTPUT_FILE=".env"
+OUTPUT_FILE="./../.env"
 
 #  Note: Alternative implementation with command line argument:
 # Commented out for future reference
@@ -72,25 +72,27 @@ node3_private_key=$(echo "$node3_output" | grep "private_key:" | awk '{print $2}
 
 # Generate invitation payload for node2
 echo "Generating invitation payload for node2..."
-invitation_payload_node2=$(meroctl --node-name node1 context invite "$context_id" "$member_public_key" "$node2_public_key")
+invitation_payload_node2=$(meroctl --node-name node1 --output-format json context invite "$context_id" "$member_public_key" "$node2_public_key")
 echo "Invitation payload for node2 generated:"
 echo "$invitation_payload_node2"
 
 # Generate invitation payload for node3
 echo "Generating invitation payload for node3..."
-invitation_payload_node3=$(meroctl --node-name node1 context invite "$context_id" "$member_public_key" "$node3_public_key")
+invitation_payload_node3=$(meroctl --node-name node1 --output-format json context invite "$context_id" "$member_public_key" "$node3_public_key")
 echo "Invitation payload for node3 generated:"
 echo "$invitation_payload_node3"
 
-#!/bin/bash
-
-# Encode the invitation payloads
-node2_encoded_invitation=$(echo "$invitation_payload_node2" | bs58)
-node3_encoded_invitation=$(echo "$invitation_payload_node3" | bs58)
+node2_encoded_invitation=$(echo "$invitation_payload_node2" | jq -r '.data')
+node3_encoded_invitation=$(echo "$invitation_payload_node3" | jq -r '.data')
 
 # Use the encoded strings in the join commands
-meroctl --node-name node2 context join "$node2_private_key" "$node2_encoded_invitation"
-meroctl --node-name node3 context join "$node3_private_key" "$node3_encoded_invitation"
+node2_join_output=$(meroctl --node-name node2 context join "$node2_private_key" "$node2_encoded_invitation")
+node3_join_output=$(meroctl --node-name node3 context join "$node3_private_key" "$node3_encoded_invitation")
+
+echo "Node2 join output:"
+echo "$node2_join_output"
+echo "Node3 join output:"
+echo "$node3_join_output"
 
 # Save to OUTPUT_FILE file
 # TODO: Eventually change member_public_key to host_public_key

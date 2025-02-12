@@ -248,7 +248,10 @@ export default function HomePage() {
       switch (formData.actionType) {
         case 'Cross contract call': {
           // Create an array of [type, value] pairs
-          const argsArray = formData.arguments.map(arg => [arg.key, arg.value]);
+          const argsArray = formData.arguments.map((arg) => [
+            arg.key,
+            arg.value,
+          ]);
 
           console.log(
             'Creating ExternalFunctionCall proposal with args:',

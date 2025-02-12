@@ -247,19 +247,12 @@ export default function HomePage() {
 
       switch (formData.actionType) {
         case 'Cross contract call': {
-          const argsObject = formData.arguments.reduce(
-            (acc, curr) => {
-              if (curr.key && curr.value) {
-                acc[curr.key] = curr.value;
-              }
-              return acc;
-            },
-            {} as Record<string, any>,
-          );
+          // Create an array of [type, value] pairs
+          const argsArray = formData.arguments.map(arg => [arg.key, arg.value]);
 
           console.log(
             'Creating ExternalFunctionCall proposal with args:',
-            argsObject,
+            argsArray,
           );
 
           request = {
@@ -267,7 +260,7 @@ export default function HomePage() {
             params: {
               receiver_id: formData.contractId,
               method_name: formData.methodName,
-              args: JSON.stringify(argsObject),
+              args: JSON.stringify(argsArray),
               deposit: formData.deposit || '0',
             },
           };

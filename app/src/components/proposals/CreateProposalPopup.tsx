@@ -6,6 +6,7 @@ import TransferForm from './TransferForm';
 import SetContextVariableForm from './SetContextVariableForm';
 import ChangeApprovalsNeededForm from './ChangeApprovalsNeededForm';
 import MaxActiveProposalsForm from './MaxActiveProposalsForm';
+import ProtocolDropdown, { ProtocolType } from './ProtocolDropdown';
 
 const ModalOverlay = styled.div`
   position: fixed;
@@ -74,6 +75,13 @@ export const ButtonSm = styled.button`
   outline: none;
 `;
 
+const FlexContainer = styled.div`
+  display: flex;
+  flex-direction: row;
+  justify-content: justify-between;
+  gap: 1rem;
+`;
+
 export interface ProposalData {
   actionType: string;
   contractId: string;
@@ -90,11 +98,15 @@ export interface ProposalData {
 interface CreateProposalPopupProps {
   setIsModalOpen: (isModalOpen: boolean) => void;
   createProposal: (proposalForm: ProposalData) => Promise<void>;
+  protocol: ProtocolType;
+  setProtocol: (protocol: ProtocolType) => void;
 }
 
 export default function CreateProposalPopup({
   setIsModalOpen,
   createProposal,
+  protocol,
+  setProtocol,
 }: CreateProposalPopupProps) {
   const [proposalForm, setProposalForm] = useState({
     actionType: 'Cross contract call',
@@ -210,10 +222,16 @@ export default function CreateProposalPopup({
       <ModalContent onClick={(e) => e.stopPropagation()}>
         <h2>Create New Proposal</h2>
         <form onSubmit={handleSubmit}>
+          <FlexContainer>
           <ActionsDropdown
             actionType={proposalForm.actionType}
             handleInputChange={handleInputChange}
           />
+          <ProtocolDropdown
+            protocol={protocol}
+            setProtocol={setProtocol}
+          />
+          </FlexContainer>
           {proposalForm.actionType === ActionTypes.CROSS_CONTRACT_CALL && (
             <CrossContractCallForm
               proposalForm={proposalForm}

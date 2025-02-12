@@ -46,6 +46,7 @@ import CreateProposalPopup, {
   ProposalData,
 } from '../../components/proposals/CreateProposalPopup';
 import Actions from '../../components/proposal/Actions';
+import { ProtocolType } from '../../components/proposals/ProtocolDropdown';
 
 const FullPageCenter = styled.div`
   display: flex;
@@ -199,6 +200,7 @@ export default function HomePage() {
   const [contextVariables, setContextVariables] = useState<ContextVariables[]>(
     [],
   );
+  const [protocol, setProtocol] = useState<ProtocolType>(ProtocolType.NEAR);
   useEffect(() => {
     if (!url || !applicationId || !accessToken || !refreshToken) {
       navigate('/auth');
@@ -247,15 +249,28 @@ export default function HomePage() {
 
       switch (formData.actionType) {
         case 'Cross contract call': {
-          // Create an array of [type, value] pairs
-          const argsArray = formData.arguments.map((arg) => [
-            arg.key,
-            arg.value,
-          ]);
+          let args = null;
+          if (protocol === ProtocolType.STELLAR) {
+            // Create an array of [type, value] pairs
+            args = formData.arguments.map((arg) => [
+              arg.key,
+              arg.value,
+            ]);
+          } else {
+            args = formData.arguments.reduce(
+              (acc, curr) => {
+                if (curr.key && curr.value) {
+                  acc[curr.key] = curr.value;
+                }
+                return acc;
+              },
+              {} as Record<string, any>,
+            );
+          }
 
           console.log(
             'Creating ExternalFunctionCall proposal with args:',
-            argsArray,
+            args,
           );
 
           request = {
@@ -263,7 +278,7 @@ export default function HomePage() {
             params: {
               receiver_id: formData.contractId,
               method_name: formData.methodName,
-              args: JSON.stringify(argsArray),
+              args: JSON.stringify(args),
               deposit: formData.deposit || '0',
             },
           };
@@ -590,6 +605,8 @@ export default function HomePage() {
         <CreateProposalPopup
           setIsModalOpen={setIsModalOpen}
           createProposal={createProposal}
+          protocol={protocol}
+          setProtocol={setProtocol}
         />
       )}
       <ProposalsWrapper>

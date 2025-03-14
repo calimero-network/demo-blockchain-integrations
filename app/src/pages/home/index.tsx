@@ -250,7 +250,7 @@ export default function HomePage() {
       switch (formData.actionType) {
         case 'Cross contract call': {
           let args = null;
-          if (protocol === ProtocolType.STELLAR) {
+          if (protocol === ProtocolType.STELLAR || protocol === ProtocolType.EVM) {
             // Create an array of [type, value] pairs
             args = formData.arguments.map((arg) => [
               arg.key,

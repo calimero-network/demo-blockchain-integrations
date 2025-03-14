@@ -11,6 +11,7 @@ export enum ProtocolType {
   NEAR = 'NEAR',
   STELLAR = 'STELLAR',
   STARKNET = 'STARKNET',
+  EVM = "EVM"
 }
 
 export const actionTypes = [
@@ -29,6 +30,10 @@ export const actionTypes = [
   {
     id: ProtocolType.STARKNET,
     label: 'Starknet',
+  },
+  {
+    id: ProtocolType.EVM,
+    label: 'EVM',
   },
 ];
 

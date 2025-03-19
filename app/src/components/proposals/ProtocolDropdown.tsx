@@ -11,7 +11,7 @@ export enum ProtocolType {
   NEAR = 'NEAR',
   STELLAR = 'STELLAR',
   STARKNET = 'STARKNET',
-  EVM = "EVM"
+  ETHEREUM = "ETHEREUM"
 }
 
 export const actionTypes = [
@@ -32,8 +32,8 @@ export const actionTypes = [
     label: 'Starknet',
   },
   {
-    id: ProtocolType.EVM,
-    label: 'EVM',
+    id: ProtocolType.ETHEREUM,
+    label: 'Ethereum',
   },
 ];
 

@@ -8,7 +8,7 @@
     "@calimero-is-near/calimero-p2p-sdk": "0.1.2",
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",
-    "axios": "^1.6.7",
+    "axios": "^1.8.2",
     "buffer": "^6.0.3",
     "next": "^14.2.21",
     "react": "^18.3.1",

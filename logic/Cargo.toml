@@ -1,6 +1,6 @@
 [package]
-name = "proxy-contract-demo"
-description = "Calimero proxy contract interaction demo"
+name = "blockchain"
+description = "Calimero blockchain integrations demo"
 version = "0.1.0"
 edition = "2021"
 

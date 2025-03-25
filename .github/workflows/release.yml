@@ -29,13 +29,20 @@ jobs:
         run: |
           cd logic
           ./build.sh
-          ls -la res/  # Debug: list files
           
+      - name: Compress WASM
+        run: |
+          cd logic/res
+          gzip -9 -k *.wasm
+          ls -la
+
       - name: Create Release
         id: create_release
         uses: softprops/action-gh-release@v1
         with:
-          files: logic/res/*.wasm
+          files: |
+            logic/res/*.wasm
+            logic/res/*.wasm.gz
           name: Release ${{ github.ref_name }}
           draft: false
           prerelease: ${{ contains(github.ref_name, '-rc') }}

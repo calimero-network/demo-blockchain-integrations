@@ -51,12 +51,17 @@ jobs:
           gzip -9 -k *.wasm
           ls -la
 
+      - name: Debug file locations
+        run: |
+          find . -name "*.wasm*" -type f
+
       - name: Create Release
         id: create_release
         uses: softprops/action-gh-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          files: |
-            logic/res/*.wasm.gz
+          files: logic/res/*.wasm.gz
           name: ${{ startsWith(github.ref, 'refs/heads/prerelease/') && format('Pre-release from {0}', github.ref_name) || format('Release from {0}', github.event.pull_request.title || github.ref_name) }}
           tag_name: ${{ startsWith(github.ref, 'refs/heads/prerelease/') && format('pre-release-{0}', github.sha) || 'latest' }}
           draft: false
@@ -66,8 +71,6 @@ jobs:
             ${{ github.event.pull_request.body || github.event.head_commit.message }}
             
             Triggered by: ${{ github.event_name == 'pull_request' && format('PR #{0}', github.event.pull_request.number) || format('Commit {0}', github.sha) }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Cleanup on failure
         if: failure()

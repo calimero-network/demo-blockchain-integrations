@@ -2,18 +2,33 @@ name: Release WASM
 
 on:
   push:
-    tags:
-      - 'v*'
+    branches:
+      - master
+      - 'prerelease/*'
+  pull_request:
+    types: [closed]
+    branches:
+      - master
 
 permissions:
   contents: write
+  pull-requests: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build-and-release:
+    if: |
+      github.event_name == 'push' || 
+      (github.event_name == 'pull_request' && github.event.pull_request.merged == true)
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Fetch all history for better release notes
 
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
@@ -42,9 +57,20 @@ jobs:
         with:
           files: |
             logic/res/*.wasm.gz
-          name: Release ${{ github.ref_name }}
+          name: ${{ startsWith(github.ref, 'refs/heads/prerelease/') && format('Pre-release from {0}', github.ref_name) || format('Release from {0}', github.event.pull_request.title || github.ref_name) }}
+          tag_name: ${{ startsWith(github.ref, 'refs/heads/prerelease/') && format('pre-release-{0}', github.sha) || 'latest' }}
           draft: false
           prerelease: ${{ contains(github.ref_name, '-rc') }}
           generate_release_notes: true
+          body: |
+            ${{ github.event.pull_request.body || github.event.head_commit.message }}
+            
+            Triggered by: ${{ github.event_name == 'pull_request' && format('PR #{0}', github.event.pull_request.number) || format('Commit {0}', github.sha) }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Cleanup on failure
+        if: failure()
+        run: |
+          rm -f /tmp/*.wasm*
+          rm -f logic/res/*.wasm.gz

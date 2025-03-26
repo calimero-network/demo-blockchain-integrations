@@ -5,6 +5,7 @@ on:
   push:
     branches:
       - master
+      - 'prerelease/*'
     paths:
       - logic/**
   pull_request:
@@ -13,6 +14,10 @@ on:
       - master
     paths:
       - logic/**
+
+permissions:
+  contents: write
+  pull-requests: read
 
 concurrency:
   group: release-${{ github.ref }}

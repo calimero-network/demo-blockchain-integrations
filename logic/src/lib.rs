@@ -19,7 +19,6 @@ pub struct AppState {
 #[serde(crate = "calimero_sdk::serde")]
 pub struct Message {
     id: String,
-    proposal_id: String,
     author: String,
     text: String,
     created_at: String,

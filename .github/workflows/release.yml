@@ -1,18 +1,18 @@
 name: Release WASM
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - master
-      - 'prerelease/*'
+    paths:
+      - logic/**
   pull_request:
-    types: [closed]
+    types: [opened, synchronize, reopened]
     branches:
       - master
-
-permissions:
-  contents: write
-  pull-requests: read
+    paths:
+      - logic/**
 
 concurrency:
   group: release-${{ github.ref }}
@@ -20,15 +20,10 @@ concurrency:
 
 jobs:
   build-and-release:
-    if: |
-      github.event_name == 'push' || 
-      (github.event_name == 'pull_request' && github.event.pull_request.merged == true)
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0  # Fetch all history for better release notes
 
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable

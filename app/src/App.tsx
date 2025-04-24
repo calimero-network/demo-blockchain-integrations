@@ -3,7 +3,7 @@ import { Routes, Route, BrowserRouter } from 'react-router-dom';
 import { AccessTokenWrapper } from '@calimero-network/calimero-client';
 
 import HomePage from './pages/home';
-import Authenticate from './pages/login/Authenticate';
+import LoginPage from './pages/login';
 
 export default function App() {
   return (
@@ -11,7 +11,7 @@ export default function App() {
       <BrowserRouter basename="/demo-blockchain-integrations/">
         <Routes>
           <Route path="/" element={<HomePage />} />
-          <Route path="/auth" element={<Authenticate />} />
+          <Route path="/auth" element={<LoginPage />} />
         </Routes>
       </BrowserRouter>
     </AccessTokenWrapper>

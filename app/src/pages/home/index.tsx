@@ -1,19 +1,10 @@
-import {
-  clearAppEndpoint,
-  clearJWT,
-  getAccessToken,
-  getAppEndpointKey,
-  getRefreshToken,
-  NodeEvent,
-  ResponseData,
-  SubscriptionsClient,
-} from '@calimero-is-near/calimero-p2p-sdk';
 import React, { useEffect, useState, useRef } from 'react';
 import styled from 'styled-components';
-import {
-  getWsSubscriptionsClient,
-  LogicApiDataSource,
-} from '../../api/dataSource/LogicApiDataSource';
+import { useNavigate } from 'react-router-dom';
+import { Buffer } from 'buffer';
+import bs58 from 'bs58';
+
+import { LogicApiDataSource } from '../../api/dataSource/LogicApiDataSource';
 import {
   ApproveProposalRequest,
   ApproveProposalResponse,
@@ -24,29 +15,27 @@ import {
   SendProposalMessageRequest,
   SendProposalMessageResponse,
   ProposalActionType,
-  ExternalFunctionCallAction,
-  TransferAction,
 } from '../../api/clientApi';
-import { getContextId, getStorageApplicationId } from '../../utils/node';
-import {
-  clearApplicationId,
-  getJWTObject,
-  getStorageExecutorPublicKey,
-} from '../../utils/storage';
-import { useNavigate } from 'react-router-dom';
 import { ContextApiDataSource } from '../../api/dataSource/ContractApiDataSource';
 import {
   ApprovalsCount,
   ContextVariables,
   ContractProposal,
 } from '../../api/contractApi';
-import { Buffer } from 'buffer';
-import bs58 from 'bs58';
 import CreateProposalPopup, {
   ProposalData,
 } from '../../components/proposals/CreateProposalPopup';
 import Actions from '../../components/proposal/Actions';
 import { ProtocolType } from '../../components/proposals/ProtocolDropdown';
+import {
+  clientLogout,
+  getAccessToken,
+  getAppEndpointKey,
+  getApplicationId,
+  getExecutorPublicKey,
+  getRefreshToken,
+  ResponseData,
+} from '@calimero-network/calimero-client';
 
 const FullPageCenter = styled.div`
   display: flex;
@@ -183,7 +172,7 @@ const ContextVariablesContainer = styled.div`
 export default function HomePage() {
   const navigate = useNavigate();
   const url = getAppEndpointKey();
-  const applicationId = getStorageApplicationId();
+  const applicationId = getApplicationId();
   const accessToken = getAccessToken();
   const refreshToken = getRefreshToken();
   const [createProposalLoading, setCreateProposalLoading] = useState(false);
@@ -194,13 +183,13 @@ export default function HomePage() {
   >(null);
   const [proposalCount, setProposalCount] = useState<number>(0);
   const [approveProposalLoading, setApproveProposalLoading] = useState(false);
-  const [hasAlerted, setHasAlerted] = useState<boolean>(false);
   const lastExecutedProposalRef = useRef<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [contextVariables, setContextVariables] = useState<ContextVariables[]>(
     [],
   );
   const [protocol, setProtocol] = useState<ProtocolType>(ProtocolType.NEAR);
+  
   useEffect(() => {
     if (!url || !applicationId || !accessToken || !refreshToken) {
       navigate('/auth');
@@ -250,12 +239,12 @@ export default function HomePage() {
       switch (formData.actionType) {
         case 'Cross contract call': {
           let args = null;
-          if (protocol === ProtocolType.STELLAR || protocol === ProtocolType.ETHEREUM) {
+          if (
+            protocol === ProtocolType.STELLAR ||
+            protocol === ProtocolType.ETHEREUM
+          ) {
             // Create an array of [type, value] pairs
-            args = formData.arguments.map((arg) => [
-              arg.key,
-              arg.value,
-            ]);
+            args = formData.arguments.map((arg) => [arg.key, arg.value]);
           } else {
             args = formData.arguments.reduce(
               (acc, curr) => {
@@ -489,26 +478,6 @@ export default function HomePage() {
     //TODO implement this function
   }
 
-  // const observeNodeEvents = async () => {
-  //   let subscriptionsClient: SubscriptionsClient = getWsSubscriptionsClient();
-  //   await subscriptionsClient.connect();
-  //   subscriptionsClient.subscribe([getContextId()]);
-
-  //   subscriptionsClient?.addCallback((data: NodeEvent) => {
-  //     if (data.data.events && data.data.events.length > 0) {
-  //       let currentValue = String.fromCharCode(...data.data.events[0].data);
-  //       let currentValueInt = isNaN(parseInt(currentValue))
-  //         ? 0
-  //         : parseInt(currentValue);
-  //       console.log('currentValueInt', currentValueInt);
-  //     }
-  //   });
-  // };
-
-  // useEffect(() => {
-  //   observeNodeEvents();
-  // }, []);
-
   const deleteProposal = async (proposalId: string) => {
     try {
       // Decode the base58 proposal ID to bytes
@@ -543,15 +512,13 @@ export default function HomePage() {
   };
 
   const logout = () => {
-    clearAppEndpoint();
-    clearJWT();
-    clearApplicationId();
+    clientLogout();
     navigate('/auth');
   };
 
   // Add this helper function to check if current user is the author
   const isCurrentUserAuthor = (proposal: ContractProposal): boolean => {
-    const currentUserKey = getJWTObject()?.executor_public_key;
+    const currentUserKey = getExecutorPublicKey();
     return proposal.author_id === currentUserKey;
   };
 
@@ -678,7 +645,7 @@ export default function HomePage() {
                     message: {
                       id: 'test' + Math.random(),
                       proposal_id: selectedProposal.id,
-                      author: getJWTObject()?.executor_public_key,
+                      author: getExecutorPublicKey(),
                       text: 'test' + Math.random(),
                       created_at: new Date().toISOString(),
                     },

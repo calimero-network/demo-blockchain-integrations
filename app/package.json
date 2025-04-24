@@ -5,7 +5,7 @@
   "type": "module",
   "homepage": "https://calimero-network.github.io/demo-blockchain-integrations/",
   "dependencies": {
-    "@calimero-is-near/calimero-p2p-sdk": "0.1.2",
+    "@calimero-network/calimero-client": "1.6.4",
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",
     "axios": "^1.8.2",

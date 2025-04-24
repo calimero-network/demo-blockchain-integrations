@@ -1,10 +1,8 @@
 import React from 'react';
-import { ClientLogin } from '@calimero-is-near/calimero-p2p-sdk';
 import { useNavigate } from 'react-router-dom';
-import { clearAppEndpoint, clearApplicationId } from '../../utils/storage';
-import { getNodeUrl, getStorageApplicationId } from '../../utils/node';
 import { styled } from 'styled-components';
 import ContentWrapper from '../../components/login/ContentWrapper';
+import { ClientLogin } from '@calimero-network/calimero-client';
 
 const Wrapper = styled.div`
   display: flex;
@@ -54,9 +52,7 @@ const Wrapper = styled.div`
 export default function Authenticate() {
   const navigate = useNavigate();
 
-  function onSetupClick() {
-    clearAppEndpoint();
-    clearApplicationId();
+  const successRedirect = () => {
     navigate('/');
   }
 
@@ -68,14 +64,7 @@ export default function Authenticate() {
             <div className="title-wrapper">
               <div className="title">App template</div>
             </div>
-            <ClientLogin
-              getNodeUrl={getNodeUrl}
-              getApplicationId={getStorageApplicationId}
-              sucessRedirect={() => navigate('/home')}
-            />
-          </div>
-          <div className="back-button" onClick={onSetupClick}>
-            Return to setup
+            <ClientLogin successRedirect={successRedirect} authMode={false}/>
           </div>
         </div>
       </Wrapper>

@@ -1,4 +1,4 @@
-import { ApiResponse } from '@calimero-is-near/calimero-p2p-sdk';
+import axios from 'axios';
 
 import {
   ApprovalsCount,
@@ -6,28 +6,19 @@ import {
   ContextVariables,
   ContractApi,
   ContractProposal,
+  GetProposalsRequest,
   Members,
 } from '../contractApi';
-import { getStorageAppEndpointKey } from '../../utils/storage';
-import axios from 'axios';
-import { getConfigAndJwt } from './LogicApiDataSource';
 
-export interface GetProposalsRequest {
-  offset: number;
-  limit: number;
-}
+import { ApiResponse, getAppEndpointKey, getContextId } from '@calimero-network/calimero-client';
 
 export class ContextApiDataSource implements ContractApi {
   async getContractProposals(
     request: GetProposalsRequest,
   ): ApiResponse<ContractProposal[]> {
     try {
-      const { jwtObject, error } = getConfigAndJwt();
-      if (error) {
-        return { error };
-      }
-
-      const apiEndpoint = `${getStorageAppEndpointKey()}/admin-api/contexts/${jwtObject.context_id}/proposals`;
+      const contextId = getContextId();
+      const apiEndpoint = `${getAppEndpointKey()}/admin-api/contexts/${contextId}/proposals`;
       const body = request;
 
       const response = await axios.post(apiEndpoint, body, {
@@ -50,11 +41,8 @@ export class ContextApiDataSource implements ContractApi {
 
   async getProposalApprovals(proposalId: String): ApiResponse<ApprovalsCount> {
     try {
-      const { jwtObject, error } = getConfigAndJwt();
-      if (error) {
-        return { error };
-      }
-      const apiEndpoint = `${getStorageAppEndpointKey()}/admin-api/contexts/${jwtObject.context_id}/proposals/${proposalId}/approvals/users`;
+      const contextId = getContextId();
+      const apiEndpoint = `${getAppEndpointKey()}/admin-api/contexts/${contextId}/proposals/${proposalId}/approvals/users`;
 
       const response = await axios.get(apiEndpoint);
 
@@ -72,15 +60,12 @@ export class ContextApiDataSource implements ContractApi {
 
   async getNumOfProposals(): ApiResponse<number> {
     try {
-      const { jwtObject, error } = getConfigAndJwt();
-      if (error) {
-        return { error };
-      }
+      const contextId = getContextId();
+      const apiEndpointLimit = `${getAppEndpointKey()}/admin-api/contexts/${contextId}/proposals/count`;
 
-      const apiEndpointLimit = `${getStorageAppEndpointKey()}/admin-api/contexts/${jwtObject.context_id}/proposals/count`;
       const limitResponse = await axios.get(apiEndpointLimit);
 
-      const apiEndpoint = `${getStorageAppEndpointKey()}/admin-api/contexts/${jwtObject.context_id}/proposals`;
+      const apiEndpoint = `${getAppEndpointKey()}/admin-api/contexts/${contextId}/proposals`;
       const body = {
         offset: 0,
         limit: limitResponse.data.data,
@@ -106,12 +91,8 @@ export class ContextApiDataSource implements ContractApi {
 
   async getContextVariables(): ApiResponse<ContextVariables[]> {
     try {
-      const { jwtObject, error } = getConfigAndJwt();
-      if (error) {
-        return { error };
-      }
-
-      const apiEndpoint = `${getStorageAppEndpointKey()}/admin-api/contexts/${jwtObject.context_id}/proposals/context-storage-entries`;
+      const contextId = getContextId();
+      const apiEndpoint = `${getAppEndpointKey()}/admin-api/contexts/${contextId}/proposals/context-storage-entries`;
       const body = {
         offset: 0,
         limit: 10,
@@ -152,6 +133,14 @@ export class ContextApiDataSource implements ContractApi {
     throw new Error('Method not implemented.');
   }
   getContextMembersCount(): ApiResponse<number> {
+    throw new Error('Method not implemented.');
+  }
+
+  getContextDetails(contextId: String): ApiResponse<ContextDetails> {
+    throw new Error('Method not implemented.');
+  }
+  
+  deleteProposal(proposalId: string): ApiResponse<void> {
     throw new Error('Method not implemented.');
   }
 }

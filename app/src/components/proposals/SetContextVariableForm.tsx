@@ -1,5 +1,5 @@
 import React from 'react';
-import { ButtonSm, FormGroup, ProposalData } from './CreateProposalPopup';
+import { FormGroup, ProposalData } from './CreateProposalPopup';
 import { styled } from 'styled-components';
 
 const ScrollWrapper = styled.div`

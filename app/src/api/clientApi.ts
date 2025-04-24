@@ -1,4 +1,4 @@
-import { ApiResponse } from '@calimero-is-near/calimero-p2p-sdk';
+import { ApiResponse } from "@calimero-network/calimero-client";
 
 export interface Message {
   id: String;
@@ -91,17 +91,17 @@ export enum ClientMethod {
 
 export interface ClientApi {
   //Cali Storage
-  getProposalMessages(
-    proposalsRequest: GetProposalMessagesRequest,
-  ): ApiResponse<GetProposalMessagesResponse>;
-  sendProposalMessage(
-    sendMessageRequest: SendProposalMessageRequest,
-  ): ApiResponse<SendProposalMessageResponse>;
   createProposal(
     request: CreateProposalRequest,
   ): ApiResponse<CreateProposalResponse>;
   approveProposal(
     request: ApproveProposalRequest,
   ): ApiResponse<ApproveProposalResponse>;
+  getProposalMessages(
+    proposalsRequest: GetProposalMessagesRequest,
+  ): ApiResponse<GetProposalMessagesResponse>;
+  sendProposalMessage(
+    sendMessageRequest: SendProposalMessageRequest,
+  ): ApiResponse<SendProposalMessageResponse>;
   deleteProposal(proposalId: string): ApiResponse<void>;
 }

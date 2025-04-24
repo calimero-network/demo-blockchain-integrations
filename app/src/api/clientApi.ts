@@ -91,17 +91,17 @@ export enum ClientMethod {
 
 export interface ClientApi {
   //Cali Storage
-  getProposalMessages(
-    proposalsRequest: GetProposalMessagesRequest,
-  ): ApiResponse<GetProposalMessagesResponse>;
-  sendProposalMessage(
-    sendMessageRequest: SendProposalMessageRequest,
-  ): ApiResponse<SendProposalMessageResponse>;
   createProposal(
     request: CreateProposalRequest,
   ): ApiResponse<CreateProposalResponse>;
   approveProposal(
     request: ApproveProposalRequest,
   ): ApiResponse<ApproveProposalResponse>;
+  getProposalMessages(
+    proposalsRequest: GetProposalMessagesRequest,
+  ): ApiResponse<GetProposalMessagesResponse>;
+  sendProposalMessage(
+    sendMessageRequest: SendProposalMessageRequest,
+  ): ApiResponse<SendProposalMessageResponse>;
   deleteProposal(proposalId: string): ApiResponse<void>;
 }

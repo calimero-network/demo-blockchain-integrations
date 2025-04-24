@@ -228,6 +228,10 @@ export class LogicApiDataSource implements ClientApi {
     };
   }
 
+  async deleteProposal(proposalId: string): ApiResponse<void> {
+    throw new Error('Method not implemented.');
+  }
+
   private async handleError(
     error: RpcError,
     params: any,

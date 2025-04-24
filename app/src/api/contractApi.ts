@@ -1,5 +1,4 @@
 import { ApiResponse } from '@calimero-is-near/calimero-p2p-sdk';
-import { GetProposalsRequest } from './dataSource/ContractApiDataSource';
 
 export interface ContextDetails {}
 
@@ -44,16 +43,24 @@ export interface ContextVariables {
   value: string;
 }
 
+export interface GetProposalsRequest {
+  offset: number;
+  limit: number;
+}
+
 export interface ContractApi {
   //Contract
   getContractProposals(
     request: GetProposalsRequest,
   ): ApiResponse<ContractProposal[]>;
-  getNumOfProposals(): ApiResponse<number>;
   getProposalApprovals(proposalId: String): ApiResponse<ApprovalsCount>;
-  getContextDetails(contextId: String): ApiResponse<ContextDetails>;
+  getNumOfProposals(): ApiResponse<number>;
+  getContextVariables(): ApiResponse<ContextVariables[]>;
   getContextMembers(): ApiResponse<Members[]>;
   getContextMembersCount(): ApiResponse<number>;
+  
+  getContextDetails(contextId: String): ApiResponse<ContextDetails>;
+  
   deleteProposal(proposalId: string): ApiResponse<void>;
 }
 

@@ -6,16 +6,12 @@ import {
   ContextVariables,
   ContractApi,
   ContractProposal,
+  GetProposalsRequest,
   Members,
 } from '../contractApi';
 import { getStorageAppEndpointKey } from '../../utils/storage';
 import axios from 'axios';
 import { getConfigAndJwt } from './LogicApiDataSource';
-
-export interface GetProposalsRequest {
-  offset: number;
-  limit: number;
-}
 
 export class ContextApiDataSource implements ContractApi {
   async getContractProposals(
@@ -152,6 +148,14 @@ export class ContextApiDataSource implements ContractApi {
     throw new Error('Method not implemented.');
   }
   getContextMembersCount(): ApiResponse<number> {
+    throw new Error('Method not implemented.');
+  }
+
+  getContextDetails(contextId: String): ApiResponse<ContextDetails> {
+    throw new Error('Method not implemented.');
+  }
+  
+  deleteProposal(proposalId: string): ApiResponse<void> {
     throw new Error('Method not implemented.');
   }
 }

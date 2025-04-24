@@ -85,7 +85,8 @@ export class LogicApiDataSource implements ClientApi {
       const params: RpcQueryParams<typeof request> = {
         contextId: config.contextId,
         method: ClientMethod.CREATE_PROPOSAL,
-        argsJson: request,
+        // @ts-ignore
+        argsJson: {request: request},
         executorPublicKey: config.executorPublicKey,
       };
 

@@ -32,6 +32,7 @@ import {
   getAccessToken,
   getAppEndpointKey,
   getApplicationId,
+  getContextId,
   getExecutorPublicKey,
   getRefreshToken,
   ResponseData,
@@ -173,8 +174,7 @@ export default function HomePage() {
   const navigate = useNavigate();
   const url = getAppEndpointKey();
   const applicationId = getApplicationId();
-  const accessToken = getAccessToken();
-  const refreshToken = getRefreshToken();
+  const contextId = getContextId();
   const [createProposalLoading, setCreateProposalLoading] = useState(false);
   const [proposals, setProposals] = useState<ContractProposal[]>([]);
   const [selectedProposal, setSelectedProposal] = useState<ContractProposal>();
@@ -189,12 +189,12 @@ export default function HomePage() {
     [],
   );
   const [protocol, setProtocol] = useState<ProtocolType>(ProtocolType.NEAR);
-  
+
   useEffect(() => {
-    if (!url || !applicationId || !accessToken || !refreshToken) {
+    if (!url || !applicationId || !contextId) {
       navigate('/auth');
     }
-  }, [accessToken, applicationId, navigate, refreshToken, url]);
+  }, [contextId, applicationId, navigate, url]);
 
   async function fetchProposalMessages(proposalId: String) {
     const params: GetProposalMessagesRequest = {
@@ -234,8 +234,6 @@ export default function HomePage() {
     let request: CreateProposalRequest;
 
     try {
-      console.log('Action type:', formData.actionType);
-
       switch (formData.actionType) {
         case 'Cross contract call': {
           let args = null;
@@ -257,11 +255,6 @@ export default function HomePage() {
             );
           }
 
-          console.log(
-            'Creating ExternalFunctionCall proposal with args:',
-            args,
-          );
-
           request = {
             action_type: ProposalActionType.ExternalFunctionCall,
             params: {
@@ -271,11 +264,6 @@ export default function HomePage() {
               deposit: formData.deposit || '0',
             },
           };
-
-          console.log(
-            'Final request structure:',
-            JSON.stringify(request, null, 2),
-          );
           break;
         }
 
@@ -324,8 +312,6 @@ export default function HomePage() {
         default:
           throw new Error('Invalid action type');
       }
-
-      console.log('Request:', request);
 
       const result: ResponseData<CreateProposalResponse> =
         await new LogicApiDataSource().createProposal(request);
@@ -545,8 +531,8 @@ export default function HomePage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {contextVariables.map((variable) => (
-                    <tr key={variable.key}>
+                  {contextVariables.map((variable, index) => (
+                    <tr key={index}>
                       <td>{variable.key}</td>
                       <td>{variable.value}</td>
                     </tr>
@@ -590,8 +576,8 @@ export default function HomePage() {
         >
           <option value="">Select a proposal</option>
           {proposals &&
-            proposals.map((proposal) => (
-              <option key={proposal.id} value={proposal.id}>
+            proposals.map((proposal, index) => (
+              <option key={index} value={proposal.id}>
                 {proposal.id}
               </option>
             ))}
@@ -613,13 +599,13 @@ export default function HomePage() {
             <div className="">
               <h3 className="title">Approvers:</h3>
               {approvers.length !== 0 ? (
-                approvers.map((a, i) => (
-                  <>
+                approvers.map((approver, index) => (
+                  <div key={index}>
                     <br />
-                    <span key={a}>
-                      {i + 1}. {a}
+                    <span>
+                      {index + 1}. {approver}
                     </span>
-                  </>
+                  </div>
                 ))
               ) : (
                 <span>No approvers</span>

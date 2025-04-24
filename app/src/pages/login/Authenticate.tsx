@@ -52,6 +52,10 @@ const Wrapper = styled.div`
 export default function Authenticate() {
   const navigate = useNavigate();
 
+  const successRedirect = () => {
+    navigate('/');
+  }
+
   return (
     <ContentWrapper>
       <Wrapper>
@@ -60,7 +64,7 @@ export default function Authenticate() {
             <div className="title-wrapper">
               <div className="title">App template</div>
             </div>
-            <ClientLogin successRedirect={() => navigate('/')} authMode={false}/>
+            <ClientLogin successRedirect={successRedirect} authMode={false}/>
           </div>
         </div>
       </Wrapper>

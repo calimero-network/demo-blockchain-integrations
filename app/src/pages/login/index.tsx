@@ -49,7 +49,7 @@ const Wrapper = styled.div`
   }
 `;
 
-export default function Authenticate() {
+export default function LoginPage() {
   const navigate = useNavigate();
 
   const successRedirect = () => {

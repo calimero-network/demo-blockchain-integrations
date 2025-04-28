@@ -1,4 +1,8 @@
-# Core App Template
+# Demo Blockchain Integrations
+
+## Introduction
+
+This project is a demo of blockchain integrations with Calimero Network. More information about Blockchain integrations can be found in our [docs](https://calimero-network.github.io/core-concepts/blockchains-integration).
 
 ## Logic
 
@@ -14,11 +18,7 @@ chmod +x ./build.sh
 ./build.sh
 ```
 
-```bash title="Terminal"
-./release.sh ./res/logic.wasm "Test Name123" "0.0.1" "-" "-" "-" calimero-package-manager.testnet
-```
-
-## App
+## React Vite App
 
 ```bash title="Terminal"
 cd app
@@ -36,7 +36,11 @@ pnpm build
 pnpm dev
 ```
 
-Open app in browser and connect to running node.
+## Setup
+
+- Start your node - [docs](https://calimero-network.github.io/build/quickstart)
+- Follow instruction to create context for your node - [instructions](https://calimero-network.github.io/tutorials/install-application/#create-new-context)
+- Open app in browser and follow login instructions.
 
 For more information how to build app check our docs:
 https://calimero-network.github.io/build/quickstart

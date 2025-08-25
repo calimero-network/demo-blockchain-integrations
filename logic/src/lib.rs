@@ -180,7 +180,7 @@ impl AppState {
             return Ok(vec![]);
         };
 
-        let entries = msgs.entries()?;
+        let entries = msgs.iter()?;
 
         Ok(entries.collect())
     }

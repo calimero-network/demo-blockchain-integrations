@@ -5,7 +5,7 @@ on:
   push:
     branches:
       - master
-      - 'prerelease/*'
+      - "prerelease/*"
     paths:
       - logic/**
   pull_request:
@@ -44,7 +44,7 @@ jobs:
         run: |
           cd logic
           ./build.sh
-          
+
       - name: Compress WASM
         run: |
           cd logic/res
@@ -58,6 +58,7 @@ jobs:
       - name: Create Release
         id: create_release
         uses: softprops/action-gh-release@v1
+        if: ${{ github.event.pull_request && !github.event.pull_request.head.repo.fork || !github.event.pull_request }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
@@ -69,7 +70,7 @@ jobs:
           generate_release_notes: true
           body: |
             ${{ github.event.pull_request.body || github.event.head_commit.message }}
-            
+
             Triggered by: ${{ github.event_name == 'pull_request' && format('PR #{0}', github.event.pull_request.number) || format('Commit {0}', github.sha) }}
 
       - name: Cleanup on failure

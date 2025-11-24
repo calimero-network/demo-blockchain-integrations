@@ -3,15 +3,20 @@ use calimero_sdk::env::ext::{AccountId, ProposalId};
 use calimero_sdk::serde::{Deserialize, Serialize};
 use calimero_sdk::types::Error;
 use calimero_sdk::{app, env};
-use calimero_storage::collections::{UnorderedMap, Vector};
+use calimero_storage::collections::{LwwRegister, Mergeable, UnorderedMap, Vector};
 
 #[app::state(emits = Event)]
-#[derive(Debug, PartialEq, PartialOrd, BorshSerialize, BorshDeserialize)]
+#[derive(Debug, BorshSerialize, BorshDeserialize)]
 #[borsh(crate = "calimero_sdk::borsh")]
 pub struct AppState {
-    messages: UnorderedMap<ProposalId, Vector<Message>>,
+    messages: UnorderedMap<ProposalId, Vector<StoredMessage>>,
 }
 
+/// Public API representation of a message.
+///
+/// This struct is used for JSON serialization in the external API and data transfer.
+/// It uses standard types (`String`) for ease of use but does not implement `Mergeable`,
+/// so it cannot be stored directly in the application state to prevent data divergence.
 #[derive(
     Clone, Debug, PartialEq, PartialOrd, BorshSerialize, BorshDeserialize, Serialize, Deserialize,
 )]
@@ -22,6 +27,56 @@ pub struct Message {
     author: String,
     text: String,
     created_at: String,
+}
+
+/// Internal storage representation of a message.
+///
+/// This struct is used for persistence within the `AppState`.
+/// All fields are wrapped in `LwwRegister` (Last-Write-Wins Register) to provide
+/// deterministic conflict resolution timestamps. This ensures the struct implements
+/// the `Mergeable` trait required by `calimero-storage` for data consistency across nodes.
+#[derive(Clone, Debug, PartialEq, BorshSerialize, BorshDeserialize)]
+#[borsh(crate = "calimero_sdk::borsh")]
+pub struct StoredMessage {
+    id: LwwRegister<String>,
+    author: LwwRegister<String>,
+    text: LwwRegister<String>,
+    created_at: LwwRegister<String>,
+}
+
+impl Mergeable for StoredMessage {
+    fn merge(
+        &mut self,
+        other: &Self,
+    ) -> Result<(), calimero_storage::collections::crdt_meta::MergeError> {
+        self.id.merge(&other.id);
+        self.author.merge(&other.author);
+        self.text.merge(&other.text);
+        self.created_at.merge(&other.created_at);
+        Ok(())
+    }
+}
+
+impl From<Message> for StoredMessage {
+    fn from(msg: Message) -> Self {
+        Self {
+            id: LwwRegister::new(msg.id),
+            author: LwwRegister::new(msg.author),
+            text: LwwRegister::new(msg.text),
+            created_at: LwwRegister::new(msg.created_at),
+        }
+    }
+}
+
+impl From<StoredMessage> for Message {
+    fn from(msg: StoredMessage) -> Self {
+        Self {
+            id: msg.id.into_inner(),
+            author: msg.author.into_inner(),
+            text: msg.text.into_inner(),
+            created_at: msg.created_at.into_inner(),
+        }
+    }
 }
 
 #[app::event]
@@ -182,7 +237,7 @@ impl AppState {
 
         let entries = msgs.iter()?;
 
-        Ok(entries.collect())
+        Ok(entries.map(Message::from).collect())
     }
 
     pub fn send_proposal_messages(
@@ -192,7 +247,7 @@ impl AppState {
     ) -> Result<(), Error> {
         let mut messages = self.messages.get(&proposal_id)?.unwrap_or_default();
 
-        messages.push(message)?;
+        messages.push(message.into())?;
 
         self.messages.insert(proposal_id, messages)?;
 
